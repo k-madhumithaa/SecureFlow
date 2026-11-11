@@ -1,0 +1,13 @@
+
+venv/
+devops_venv/
+__pycache__/
+.pytest_cache/
+.git/
+.gitignore
+.env
+*.pyc
+*.log
+tests/
+bandit-report.json
+pip-audit-report.json

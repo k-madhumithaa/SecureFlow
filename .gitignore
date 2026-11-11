@@ -1,0 +1,28 @@
+
+# Python virtual environments
+venv/
+devops_venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Generated reports
+bandit-report.json
+pip-audit-report.json
+trivy-report.json
+
+# Docker image archive
+secureflow.tar
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
