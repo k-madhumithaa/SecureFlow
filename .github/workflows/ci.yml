@@ -1,0 +1,79 @@
+
+name: SecureFlow DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  security-pipeline:
+    name: Build and Security Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout source code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # 3. Install dependencies
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      # 4. Run automated tests
+      - name: Run Pytest
+        run: |
+          python -m pytest -v
+
+      # 5. Run Bandit source-code security scan
+      - name: Run Bandit SAST
+        run: |
+          python -m bandit -r app/ -ll -f json -o bandit-report.json
+
+      # 6. Run pip-audit dependency scan
+      - name: Run pip-audit
+        run: |
+          python -m pip_audit -r requirements-dev.txt -f json -o pip-audit-report.json
+
+      # 7. Build Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t secureflow:${{ github.sha }} .
+
+      # 8. Scan Docker image using Trivy
+      - name: Run Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: secureflow:${{ github.sha }}
+          format: json
+          output: trivy-report.json
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          vuln-type: os,library
+
+      # 9. Upload security reports
+      - name: Upload Security Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secureflow-security-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
+            trivy-report.json
+          if-no-files-found: ignore
+          retention-days: 30
